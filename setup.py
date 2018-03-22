@@ -25,7 +25,7 @@ setup(
     include_package_data=True,
 
     # github source
-    url='http://github.com/....',
+    url='https://github.com/mickbad/mblibs',
 
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers.
     classifiers=[
@@ -42,5 +42,7 @@ setup(
         "Topic :: Utilities",
     ],
 
-    #license="WTFPL",
+    license="MIT",
+
+    keywords="development tools fasting",
 )
