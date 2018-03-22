@@ -1,0 +1,3 @@
+include *.md
+include Pipfile
+recursive-include assets *.jpg

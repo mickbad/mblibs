@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from setuptools import setup, find_packages
+
+# import lib
+import mblibs
+
+# setup
+setup(
+    name='mblibs',
+    version=mblibs.__version__,
+
+    packages=find_packages(),
+
+    author="MickBad",
+    author_email="prog@mickbad.com",
+    description="Fast tools for programming",
+
+    long_description=open('README.md').read(),
+
+	install_requires=["pyyaml"],
+
+    # activate MANIFEST.in
+    include_package_data=True,
+
+    # github source
+    url='http://github.com/....',
+
+    # https://pypi.python.org/pypi?%3Aaction=list_classifiers.
+    classifiers=[
+        "Programming Language :: Python",
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Natural Language :: French",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Software Development :: Testing",
+        "Topic :: Utilities",
+    ],
+
+    #license="WTFPL",
+)
