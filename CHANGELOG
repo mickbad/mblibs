@@ -1,5 +1,18 @@
 Changelog
 
+* version 1.0.7 - 18/07/2018
+
+FastSettings: path include indice for list configuraiton
+
+{'data': [{'ident': 'name1', 'rows': [{'key': 1}, {'key': 2}]},
+          {'ident': 'name2', 'rows': [{'key': 3}, {'key': 4}]}]}
+
+"/data[1]/rows[0]/key" => 3
+"/data[0]/rows" => [{'key': 1}, {'key': 2}]
+
+FastSettings: configuration can be read from file or text content
+def __init__(self, config_filename="", config_content="")
+
 * version 1.0.6 - 18/07/2018
 
 object FastSetting: add option yesterday in getWithDateFormat

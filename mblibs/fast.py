@@ -10,7 +10,7 @@
 	>>> settings = FastSettings("/path/to/yaml_or_json")
 """
 
-# compatabilité 
+# compatabilité
 from __future__ import print_function
 
 # libs
@@ -27,6 +27,7 @@ __all__ = ["FastSettings", "FastLogger", "FastEmail", "FastThread"]
 # ----------------------------------------------------------------------
 
 # libs
+import re
 import json
 import codecs
 
@@ -34,14 +35,15 @@ import codecs
 class FastSettings(object):
 	# ----------------------------------------------------------------------
 	""" object de gestion des configuraitons """
-	def __init__(self, config_filename):
+	def __init__(self, config_filename="", config_content=""):
 		super(FastSettings, self).__init__()
 		self.config_filename = config_filename
+		self.config_content = config_content
 
 		# vérification d'usage
-		if not os.path.isfile(self.config_filename):
+		if not os.path.isfile(self.config_filename) and config_content == "":
 			# le fichier n'existe pas !
-			raise Exception( "{}: not exists!".format(self.config_filename) )
+			raise Exception("{}: not exists!".format(self.config_filename))
 
 		# - lecture des données de configuration
 		self.reload()
@@ -53,18 +55,20 @@ class FastSettings(object):
 			depuis le fichier extérieur
 		"""
 		# lecture du fichier de configuration en mode UTF-8
-		try:
-			# content = open(self.config_filename).read()
-			content = codecs.open(self.config_filename, "r", "utf8").read()
+		if self.config_filename != "":
+			try:
+				# content = open(self.config_filename).read()
+				self.config_content = codecs.open(self.config_filename, "r", "utf8").read()
 
-		except Exception as e:
-			raise Exception( "{}: json/yaml settings error reading: {}".format(self.config_filename, e) )
+			except Exception as e:
+				raise Exception(
+					"{}: json/yaml settings error reading: {}".format(self.config_filename, e))
 
 		# interprétation des données
 		error_str = ""
 		error_reading_json, error_reading_yaml = False, False
 		try:
-			self.settings = json.loads(content)
+			self.settings = json.loads(self.config_content)
 		except Exception as e:
 			error_str = e
 			error_reading_json = True
@@ -72,17 +76,18 @@ class FastSettings(object):
 		if error_reading_json:
 			try:
 				import yaml
-				self.settings = yaml.load(content.replace("\t", "  "))
+				self.settings = yaml.load(self.config_content.replace("\t", "  "))
 			except Exception as e:
 				error_str = e
 				error_reading_yaml = True
 
 		if error_reading_json and error_reading_yaml:
-			raise Exception( "{}: json/yaml settings incorrect: {}".format(self.config_filename, error_str) )
+			raise Exception(
+				"{}: json/yaml settings incorrect: {}".format(self.config_filename, error_str))
 
 	# ----------------------------------------------------------------------
 	# Récupération d'une configuration
-	def get(self, name, default = "", __settings_temp = None):
+	def get(self, name, default="", __settings_temp=None):
 		""" 
 			Récupération d'une configuration 
 			le paramètre ```name``` peut être soit un nom ou 
@@ -103,16 +108,54 @@ class FastSettings(object):
 		if name.startswith("/"):
 			name = name[1:]
 
-		# check s'il s'agit d'un chemin
+		# check si le chemin termine par / auquel cas on le supprime
+		if name.endswith("/"):
+			name = name[:-1]
+
+		# check s'il s'agit d'un chemin complet
 		if "/" in name:
 			# récupération du nom de la sous configuraiton
 			name_master = name.split("/")[0]
+
+			# récupération de l'indice si le nom obtenu contient []
+			indice_master = -1
+			indices_master = re.findall(r"\d+", name_master)
+			if len(indices_master) > 0:
+				try:
+					indice_master = int(indices_master[0])
+				except:
+					pass
+
+			# suppression de l'indice dans le nom du chemin courant (ie: data[0] devient data)
+			name_master = name_master.replace("[{}]".format(indice_master), "")
+
+			# recherche si la clef est présente dans le chemin courant
 			if name_master not in __settings_temp.keys():
 				return default
 
 			# récupération de la sous configuration
-			__settings_temp = __settings_temp[name_master]
+			if indice_master < 0:
+				# la sous configuration n'est pas une liste
+				__settings_temp = __settings_temp[name_master]
+
+			else:
+				# la sous configuration est une liste
+				__settings_temp = __settings_temp[name_master][indice_master]
+
+			# recursion
 			return self.get("/".join(name.split("/")[1:]), default, __settings_temp)
+
+		# récupération de l'indice si le nom obtenu contient []
+		indice_master = -1
+		indices_master = re.findall(r"\d+", name)
+		if len(indices_master) > 0:
+			try:
+				indice_master = int(indices_master[0])
+			except:
+				pass
+
+		# suppression de l'indice dans le nom du chemin courant (ie: data[0] devient data)
+		name = name.replace("[{}]".format(indice_master), "")
 
 		# check de la précense de la clef
 		if name not in __settings_temp.keys():
@@ -120,7 +163,13 @@ class FastSettings(object):
 			return default
 
 		# récupération de la valeur
-		value = __settings_temp[name]
+		if indice_master < 0:
+			# la sous configuration n'est pas une liste
+			value = __settings_temp[name]
+
+		else:
+			# la sous configuration est une liste
+			value = __settings_temp[name][indice_master]
 
 		# trim si value est un str
 		if isinstance(value, str):
@@ -208,7 +257,6 @@ class FastSettings(object):
 		return content
 
 
-
 # ----------------------------------------------------------------------
 # Outils Logging
 # ----------------------------------------------------------------------
@@ -258,13 +306,14 @@ class FastLogger(object):
 		# système de rotation
 		if rotate_log_mode in ["S", "M", "H", "D", "W", "midnight"]:
 			handler = TimedRotatingFileHandler(self.filename,
-												when=rotate_log_mode,
-												interval=1,
-												backupCount=rotate_log_count)
+                                      when=rotate_log_mode,
+                                      interval=1,
+                                      backupCount=rotate_log_count)
 
 		elif type(rotate_log_mode) == int:
 			# rotation par la taille en bytes
-			handler = RotatingFileHandler(self.filename, maxBytes=rotate_log_mode, backupCount=5)
+			handler = RotatingFileHandler(
+				self.filename, maxBytes=rotate_log_mode, backupCount=5)
 
 		elif rotate_log_mode.lower() == "stdout":
 			handler = logging.StreamHandler()
@@ -273,18 +322,18 @@ class FastLogger(object):
 			handler = logging.FileHandler(self.filename)
 
 		# format du log
-		formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+		formatter = logging.Formatter(
+			"%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 		handler.setFormatter(formatter)
 		self.logger.addHandler(handler)
 
 	# ----------------------------------------------------------------------
-	def setPrefix(self, text = ""):
+	def setPrefix(self, text=""):
 		""" mise en place d'un préfixe à chaque écriture de message """
 		if len(text) > 0:
 			self.message_prefix = "{}: ".format(text)
 		else:
 			self.message_prefix = ""
-
 
 	# ----------------------------------------------------------------------
 	def setLevel(self, level):
@@ -296,45 +345,45 @@ class FastLogger(object):
 		# level en tant que string
 		level = level.lower()
 		if level == "debug":
-			self.logger.setLevel( logging.DEBUG )
+			self.logger.setLevel(logging.DEBUG)
 
 		elif level == "info":
-			self.logger.setLevel( logging.INFO )
+			self.logger.setLevel(logging.INFO)
 
 		elif level == "warning" or level == "warning":
-			self.logger.setLevel( logging.WARN )
+			self.logger.setLevel(logging.WARN)
 
 		elif level == "error":
-			self.logger.setLevel( logging.ERROR )
+			self.logger.setLevel(logging.ERROR)
 
 		else:
 			# par défaut
-			self.logger.setLevel( logging.INFO )
+			self.logger.setLevel(logging.INFO)
 
 	# ----------------------------------------------------------------------
 	def info(self, text):
 		""" Ajout d'un message de log de type INFO """
-		self.logger.info( "{}{}".format(self.message_prefix, text) )
+		self.logger.info("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def debug(self, text):
 		""" Ajout d'un message de log de type DEBUG """
-		self.logger.debug( "{}{}".format(self.message_prefix, text) )
+		self.logger.debug("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def warn(self, text):
 		""" Ajout d'un message de log de type WARN """
-		self.logger.warn( "{}{}".format(self.message_prefix, text) )
+		self.logger.warn("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def warning(self, text):
 		""" Ajout d'un message de log de type WARN """
-		self.logger.warning( "{}{}".format(self.message_prefix, text) )
+		self.logger.warning("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def error(self, text):
 		""" Ajout d'un message de log de type ERROR """
-		self.logger.error( "{}{}".format(self.message_prefix, text) )
+		self.logger.error("{}{}".format(self.message_prefix, text))
 
 
 # ----------------------------------------------------------------------
@@ -359,7 +408,7 @@ class FastEmail(object):
 		self.mail_subject = "Message inconnu"
 		self.mail_text = "Message inconnu"
 		self.mail_html = "<h2>Message inconnu</h2>"
-		
+
 	# ----------------------------------------------------------------------
 	# Définition d'un texte pour le cord du message
 	def setHTML_from_file(self, filename, args):
@@ -441,18 +490,18 @@ class FastThread(threading.Thread):
 		threading.Thread.__init__(self)
 		self.threadID = threadID
 		self.function = function
-		self.args     = args
-		self.kwargs   = kwargs
+		self.args = args
+		self.kwargs = kwargs
 
 		# debug mode
-		self.debug    = False
+		self.debug = False
 
 	# ----------------------------------------------------------------------
 	# Surcharge du fonctionnement du thread
 	def run(self):
 		""" Fonctionnement du thread """
 		if self.debug:
-			print ("Starting " + self.name)
+			print("Starting " + self.name)
 
 		# Lancement du programme du thread
 		if isinstance(self.function, str):
@@ -461,4 +510,4 @@ class FastThread(threading.Thread):
 			self.function(*self.args, **self.kwargs)
 
 		if self.debug:
-			print ("Exiting " + self.name)
+			print("Exiting " + self.name)
