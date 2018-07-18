@@ -190,6 +190,17 @@ class FastSettings(object):
 			return default
 
 	# ---------------------------------------------------------
+	def getFloat(self, name, default=0.0):
+		""" récupération d'un élément float """
+		try:
+			value = self.get(name, default)
+			return float(value)
+
+		except:
+			# pas de configuration trouvé ou convertion impossible ?
+			return default
+
+	# ---------------------------------------------------------
 	def getEnable(self, name, default=False):
 		""" récupération d'un élément vrai ou faux (transformation en bool) """
 		# valeur

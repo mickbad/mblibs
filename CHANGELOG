@@ -13,9 +13,11 @@ FastSettings: path include indice for list configuraiton
 FastSettings: configuration can be read from file or text content
 def __init__(self, config_filename="", config_content="")
 
+FastSettings: add .getFloat() function to get float configuration value
+
 * version 1.0.6 - 18/07/2018
 
-object FastSetting: add option yesterday in getWithDateFormat
+object FastSettings: add option yesterday in getWithDateFormat
 can get automatics values from yaml/json configuration file like (for today 18/07/2018)
 	key: {dd}/{mm}/{yyyy} => 18/07/2018
 	tomorrow_key: {tomorrow_dd}/{tomorrow_mm}/{tomorrow_yyyy} => 19/07/2018
