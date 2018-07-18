@@ -1,5 +1,6 @@
-Installation for PyPi
-https://pypi.org/
+Installation for PyPi (https://pypi.org/)
+
+USAGE : https://packaging.python.org/tutorials/distributing-packages/
 
 # installation
 $ pip install twine

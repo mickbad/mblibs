@@ -161,6 +161,7 @@ class FastSettings(object):
 		# récupation de la valeur
 		now = datetime.datetime.now()
 		tomorrow = now + datetime.timedelta(days=1)
+		yesterday = now + datetime.timedelta(days=-1)
 		return self.get(name, default).format(
 			yyyy=now.year,
 			mm=now.strftime("%m"),
@@ -177,6 +178,14 @@ class FastSettings(object):
 			tomorrow_M=tomorrow.strftime("%M"),
 			tomorrow_S=tomorrow.strftime("%S"),
 			tomorrow_mm_human=tomorrow.strftime("%B"),
+
+			yesterday_yyyy=yesterday.year,
+			yesterday_mm=yesterday.strftime("%m"),
+			yesterday_dd=yesterday.strftime("%d"),
+			yesterday_H=yesterday.strftime("%H"),
+			yesterday_M=yesterday.strftime("%M"),
+			yesterday_S=yesterday.strftime("%S"),
+			yesterday_mm_human=yesterday.strftime("%B"),
 		)
 
 	# ----------------------------------------------------------------------
@@ -226,6 +235,7 @@ class FastLogger(object):
 				'D'			Days
 				'W'			Week day (0=Monday) w0-w6 (weekday, 0=Monday)
 				'midnight'	Roll over at midnight
+				'stdout'    redirect log to stdout
 		"""
 		super(FastLogger, self).__init__()
 
@@ -255,6 +265,9 @@ class FastLogger(object):
 		elif type(rotate_log_mode) == int:
 			# rotation par la taille en bytes
 			handler = RotatingFileHandler(self.filename, maxBytes=rotate_log_mode, backupCount=5)
+
+		elif rotate_log_mode.lower() == "stdout":
+			handler = logging.StreamHandler()
 
 		else:
 			handler = logging.FileHandler(self.filename)
