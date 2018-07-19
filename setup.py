@@ -8,8 +8,8 @@ import mblibs
 
 # description
 long_description = open('README.md').read()
-long_description += "\n\n"
-long_description += open('CHANGELOG').read()
+# long_description += "\n\n"
+# long_description += open('CHANGELOG').read()
 
 # setup
 setup(

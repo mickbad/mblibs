@@ -1,5 +1,10 @@
 Changelog
 
+* version 1.0.8 - 19/07/2018
+
+Remove CHANGELOG reference in setup.py
+
+
 * version 1.0.7 - 19/07/2018
 
 FastSettings: path include indice for list configuraiton
