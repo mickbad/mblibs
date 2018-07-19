@@ -173,6 +173,10 @@ class FastSettings(object):
 			# la sous configuration est une liste
 			value = __settings_temp[name][indice_master]
 
+		# interdiction de la valeur "None"
+		if value is None:
+			value = default
+
 		# trim si value est un str
 		if isinstance(value, str):
 			value = value.strip()
@@ -221,7 +225,7 @@ class FastSettings(object):
 			{mm_human} donne le nom du mois
 		"""
 		# récupération de la valeur
-		value = self.get(name, default).lower()
+		value = self.get(name, default)
 
 		# récupération d'un delta dans le nom
 		#  {dd-10} donne 10 jours avant le jour d'aujourd'hui
