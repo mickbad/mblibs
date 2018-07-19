@@ -13,6 +13,8 @@ FastSettings: path include indice for list configuraiton
 FastSettings: configuration can be read from file or text content
 def __init__(self, config_filename="", config_content="")
 
+FastSettings: .get(): set None retrieve to default
+
 FastSettings: add .getFloat() function to get float configuration value
 
 FastSettings: add macros for .getWithDateFormat()
