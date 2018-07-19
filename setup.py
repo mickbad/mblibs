@@ -6,6 +6,11 @@ from setuptools import setup, find_packages
 # import lib
 import mblibs
 
+# description
+long_description = open('README.md').read()
+long_description += "\n\n"
+long_description += open('CHANGELOG').read()
+
 # setup
 setup(
     name='mblibs',
@@ -17,7 +22,7 @@ setup(
     author_email="prog@mickbad.com",
     description="Fast tools for programming",
 
-    long_description=open('README.md').read(),
+    long_description=long_description,
 
 	install_requires=["pyyaml"],
 

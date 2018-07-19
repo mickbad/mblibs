@@ -1,6 +1,6 @@
 Changelog
 
-* version 1.0.7 - 18/07/2018
+* version 1.0.7 - 19/07/2018
 
 FastSettings: path include indice for list configuraiton
 
@@ -14,6 +14,26 @@ FastSettings: configuration can be read from file or text content
 def __init__(self, config_filename="", config_content="")
 
 FastSettings: add .getFloat() function to get float configuration value
+
+FastSettings: add macros for .getWithDateFormat()
+	#  {yyyy}, {mm}, {dd}, {H}, {M}, {S}, {mm_human}
+	#
+	#  {tomorrow_yyyy}, {tomorrow_mm}, {tomorrow_dd}, {tomorrow_H}, {tomorrow_M}, {tomorrow_S}, {tomorrow_mm_human}
+	#  {yesterday_yyyy}, {yesterday_mm}, {yesterday_dd}, {yesterday_H}, {yesterday_M}, {yesterday_S}, {yesterday_mm_human}
+	#
+	#  {weekday_tomorrow_yyyy}, {weekday_tomorrow_mm}, {weekday_tomorrow_dd}, {weekday_tomorrow_H}, {weekday_tomorrow_M}, {weekday_tomorrow_S}, {weekday_tomorrow_mm_human}
+	#  {weekday_yesterday_yyyy}, {weekday_yesterday_mm}, {weekday_yesterday_dd}, {weekday_yesterday_H}, {weekday_yesterday_M}, {weekday_yesterday_S}, {weekday_yesterday_mm_human}
+	#
+	#  {weekend_tomorrow_yyyy}, {weekend_tomorrow_mm}, {weekend_tomorrow_dd}, {weekend_tomorrow_H}, {weekend_tomorrow_M}, {weekend_tomorrow_S}, {weekend_tomorrow_mm_human}
+	#  {weekend_yesterday_yyyy}, {weekend_yesterday_mm}, {weekend_yesterday_dd}, {weekend_yesterday_H}, {weekend_yesterday_M}, {weekend_yesterday_S}, {weekend_yesterday_mm_human}
+	#
+	#  {working_tomorrow_yyyy}, {working_tomorrow_mm}, {working_tomorrow_dd}, {working_tomorrow_H}, {working_tomorrow_M}, {working_tomorrow_S}, {working_tomorrow_mm_human}
+	#  {working_yesterday_yyyy}, {working_yesterday_mm}, {working_yesterday_dd}, {working_yesterday_H}, {working_yesterday_M}, {working_yesterday_S}, {working_yesterday_mm_human}
+
+
+FastDate: Add class for manipulate datetime (yesterday, weekday_yesterday, 
+weekend_yesterday, working_yesterday, *_tommorrow, delta)
+
 
 * version 1.0.6 - 18/07/2018
 

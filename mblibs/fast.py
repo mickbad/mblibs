@@ -17,9 +17,11 @@ from __future__ import print_function
 import os
 import sys
 import time
-import datetime
+from datetime import datetime
+from datetime import timedelta
 
-__all__ = ["FastSettings", "FastLogger", "FastEmail", "FastThread"]
+# objets admis
+__all__ = ["FastSettings", "FastLogger", "FastEmail", "FastThread", "FastDate"]
 
 
 # ----------------------------------------------------------------------
@@ -218,11 +220,34 @@ class FastSettings(object):
 			variables acceptés : {dd}, {mm}, {yyyy}, {H}, {M} et {S}
 			{mm_human} donne le nom du mois
 		"""
-		# récupation de la valeur
-		now = datetime.datetime.now()
-		tomorrow = now + datetime.timedelta(days=1)
-		yesterday = now + datetime.timedelta(days=-1)
-		return self.get(name, default).format(
+		# récupération de la valeur
+		value = self.get(name, default).lower()
+
+		# récupération d'un delta dans le nom
+		#  {dd-10} donne 10 jours avant le jour d'aujourd'hui
+		#  {H+12} donne 12 heures après l'heure courante
+		# delta_d = int(re.findall(r"[+|-]\d+", value)[0]) if value.startswith("{dd") else 0
+
+		# objet de date interne
+		d = FastDate()
+
+		# récupation des dates
+		now = d.convert()
+
+		tomorrow = d.tomorrow()
+		yesterday = d.yesterday()
+
+		weekday_tomorrow = d.weekday_tomorrow()
+		weekday_yesterday = d.weekday_yesterday()
+
+		weekend_tomorrow = d.weekend_tomorrow()
+		weekend_yesterday = d.weekend_yesterday()
+
+		working_tomorrow = d.working_tomorrow()
+		working_yesterday = d.working_yesterday()
+
+		# formatage de la valeur
+		return value.format(
 			yyyy=now.year,
 			mm=now.strftime("%m"),
 			dd=now.strftime("%d"),
@@ -246,6 +271,54 @@ class FastSettings(object):
 			yesterday_M=yesterday.strftime("%M"),
 			yesterday_S=yesterday.strftime("%S"),
 			yesterday_mm_human=yesterday.strftime("%B"),
+
+			weekday_yesterday_yyyy=weekday_yesterday.year,
+			weekday_yesterday_mm=weekday_yesterday.strftime("%m"),
+			weekday_yesterday_dd=weekday_yesterday.strftime("%d"),
+			weekday_yesterday_H=weekday_yesterday.strftime("%H"),
+			weekday_yesterday_M=weekday_yesterday.strftime("%M"),
+			weekday_yesterday_S=weekday_yesterday.strftime("%S"),
+			weekday_yesterday_mm_human=weekday_yesterday.strftime("%B"),
+
+			weekday_tomorrow_yyyy=weekday_tomorrow.year,
+			weekday_tomorrow_mm=weekday_tomorrow.strftime("%m"),
+			weekday_tomorrow_dd=weekday_tomorrow.strftime("%d"),
+			weekday_tomorrow_H=weekday_tomorrow.strftime("%H"),
+			weekday_tomorrow_M=weekday_tomorrow.strftime("%M"),
+			weekday_tomorrow_S=weekday_tomorrow.strftime("%S"),
+			weekday_tomorrow_mm_human=weekday_tomorrow.strftime("%B"),
+
+			weekend_yesterday_yyyy=weekend_yesterday.year,
+			weekend_yesterday_mm=weekend_yesterday.strftime("%m"),
+			weekend_yesterday_dd=weekend_yesterday.strftime("%d"),
+			weekend_yesterday_H=weekend_yesterday.strftime("%H"),
+			weekend_yesterday_M=weekend_yesterday.strftime("%M"),
+			weekend_yesterday_S=weekend_yesterday.strftime("%S"),
+			weekend_yesterday_mm_human=weekend_yesterday.strftime("%B"),
+
+			weekend_tomorrow_yyyy=weekend_tomorrow.year,
+			weekend_tomorrow_mm=weekend_tomorrow.strftime("%m"),
+			weekend_tomorrow_dd=weekend_tomorrow.strftime("%d"),
+			weekend_tomorrow_H=weekend_tomorrow.strftime("%H"),
+			weekend_tomorrow_M=weekend_tomorrow.strftime("%M"),
+			weekend_tomorrow_S=weekend_tomorrow.strftime("%S"),
+			weekend_tomorrow_mm_human=weekend_tomorrow.strftime("%B"),
+
+			working_tomorrow_yyyy=working_tomorrow.year,
+			working_tomorrow_mm=working_tomorrow.strftime("%m"),
+			working_tomorrow_dd=working_tomorrow.strftime("%d"),
+			working_tomorrow_H=working_tomorrow.strftime("%H"),
+			working_tomorrow_M=working_tomorrow.strftime("%M"),
+			working_tomorrow_S=working_tomorrow.strftime("%S"),
+			working_tomorrow_mm_human=working_tomorrow.strftime("%B"),
+
+			working_yesterday_yyyy=working_yesterday.year,
+			working_yesterday_mm=working_yesterday.strftime("%m"),
+			working_yesterday_dd=working_yesterday.strftime("%d"),
+			working_yesterday_H=working_yesterday.strftime("%H"),
+			working_yesterday_M=working_yesterday.strftime("%M"),
+			working_yesterday_S=working_yesterday.strftime("%S"),
+			working_yesterday_mm_human=working_yesterday.strftime("%B"),
 		)
 
 	# ----------------------------------------------------------------------
@@ -522,3 +595,189 @@ class FastThread(threading.Thread):
 
 		if self.debug:
 			print("Exiting " + self.name)
+
+
+# ----------------------------------------------------------------------
+# Outils de date
+# ----------------------------------------------------------------------
+
+# libs
+
+# ----------------------------------------------------------------------
+class FastDate(object):
+	# ----------------------------------------------------------------------
+	def __init__(self):
+		super(FastDate, self).__init__()
+
+	# ----------------------------------------------------------------------
+	def convert(self, date_from=None, date_format=""):
+		"""
+		Retourne la date courante ou depuis l'argument au format datetime
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		try:
+			return datetime.strptime(date_from, date_format)
+
+		except:
+			# échec, on prend la date courante
+			return datetime.now()
+
+	# ----------------------------------------------------------------------
+	def delta(self, date_from=None, date_format="", days=0, hours=0, minutes=0, seconds=0, days_range=[1, 2, 3, 4, 5, 6, 7]):
+		"""
+		Retourne la date courante ou depuis une date fournie moins un delta
+		et étant autorisé dans une plage de jour (lundi=1 ... dimanche=7)
+
+		:param: :date_from date de référence
+		:param: :days nombre de jours à changer
+		:param: :hours nombre d'heures à changer
+		:param: :minutes nombre de minutes à changer
+		:param: :seconds nombre de secondes à changer
+		:param: :days_range numéro des jours (iso) autorisé pour le changement
+		:return datetime
+		"""
+		# check des jours autorisés
+		range_correct = False
+		for i in range(1, 8):
+			if i in days_range:
+				# au moins un jour autorisé est correcte (de 1 à 7)
+				range_correct = True
+
+		# si aucun jour dans days_range ne correspond à jour réel,
+		# on affecte un défaut
+		if not range_correct:
+			days_range = [i for i in range(1, 8)]
+
+		# détermination du sens de déplacement du jour pour le days_range
+		day_sens = 1  # en avant
+		delta_absolute = days * 24 * 3600 + hours * 3600 + minutes * 60 + seconds
+		if delta_absolute < 0:
+			day_sens = -1
+
+		# recherche de la date de départ
+		now = self.convert(date_from=date_from, date_format=date_format)
+
+		# calcul de la nouvelle date
+		current_date = now + timedelta(
+			days=days,
+			hours=hours,
+			minutes=minutes,
+			seconds=seconds
+		)
+
+		# recherche d'un jour autorisé
+		while current_date.isoweekday() not in days_range:
+			current_date = current_date + timedelta(days=day_sens)
+
+		# retour
+		return current_date
+
+	# ----------------------------------------------------------------------
+	# - Jour en moins dans la date
+	# ----------------------------------------------------------------------
+
+	# ----------------------------------------------------------------------
+	def yesterday(self, date_from=None, date_format=""):
+		"""
+		Retourne la date d'hier depuis maintenant ou depuis une date fournie
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date d'hier
+		return self.delta(date_from=date_from, date_format=date_format, days=-1)
+
+	# ----------------------------------------------------------------------
+	def weekday_yesterday(self, date_from=None, date_format=""):
+		"""
+		Retourne la date d'hier depuis maintenant ou depuis une date fournie
+		seulement sur les jours de semaine.
+		Ainsi vendredi devient jeudi et lundi devient vendredi
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date d'hier que sur les jours de semaine
+		return self.delta(days=-1, date_from=date_from, date_format=date_format, days_range=[1, 2, 3, 4, 5])
+
+	# ----------------------------------------------------------------------
+	def weekend_yesterday(self, date_from=None, date_format=""):
+		"""
+		Retourne la date d'hier depuis maintenant ou depuis une date fournie
+		seulement sur les jours de weekend.
+		Ainsi dimanche devient samedi et samedi devient dimanche
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date d'hier que sur les jours de week-end
+		return self.delta(days=-1, date_from=date_from, date_format=date_format, days_range=[6, 7])
+
+	# ----------------------------------------------------------------------
+	def working_yesterday(self, date_from=None, date_format=""):
+		"""
+		Retourne la date d'hier depuis maintenant ou depuis une date fournie
+		seulement sur les jours ouvrableq.
+		Ainsi lundi devient samedi et samedi devient vendredi
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date d'hier que sur les jours de week-end
+		return self.delta(days=-1, date_from=date_from, date_format=date_format, days_range=[1, 2, 3, 4, 5, 6])
+
+	# ----------------------------------------------------------------------
+	# - Jour en plus dans la date
+	# ----------------------------------------------------------------------
+
+	# ----------------------------------------------------------------------
+	def tomorrow(self, date_from=None, date_format=""):
+		"""
+		Retourne la date de demain depuis maintenant ou depuis une date fournie
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date de demain
+		return self.delta(date_from=date_from, date_format=date_format, days=1)
+
+	# ----------------------------------------------------------------------
+	def weekday_tomorrow(self, date_from=None, date_format=""):
+		"""
+		Retourne la date de demain depuis maintenant ou depuis une date fournie
+		seulement sur les jours de semaine.
+		Ainsi vendredi devient jeudi et lundi devient vendredi
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date de demain que sur les jours de semaine
+		return self.delta(days=1, date_from=date_from, date_format=date_format, days_range=[1, 2, 3, 4, 5])
+
+	# ----------------------------------------------------------------------
+	def weekend_tomorrow(self, date_from=None, date_format=""):
+		"""
+		Retourne la date de demain depuis maintenant ou depuis une date fournie
+		seulement sur les jours de weekend.
+		Ainsi dimanche devient samedi et samedi devient dimanche
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date de demain que sur les jours de week-end
+		return self.delta(days=1, date_from=date_from, date_format=date_format, days_range=[6, 7])
+
+	# ----------------------------------------------------------------------
+	def working_tomorrow(self, date_from=None, date_format=""):
+		"""
+		Retourne la date de demain depuis maintenant ou depuis une date fournie
+		seulement sur les jours ouvrableq.
+		Ainsi lundi devient samedi et samedi devient vendredi
+
+		:param: :date_from date de référence
+		:return datetime
+		"""
+		# date de demain que sur les jours de week-end
+		return self.delta(days=1, date_from=date_from, date_format=date_format, days_range=[1, 2, 3, 4, 5, 6])
