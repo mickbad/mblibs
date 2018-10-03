@@ -403,7 +403,7 @@ class FastLogger(object):
 			handler = RotatingFileHandler(
 				self.filename, maxBytes=rotate_log_mode, backupCount=5)
 
-		elif rotate_log_mode.lower() == "stdout":
+		elif not rotate_log_mode is None and rotate_log_mode.lower() == "stdout":
 			handler = logging.StreamHandler()
 
 		else:

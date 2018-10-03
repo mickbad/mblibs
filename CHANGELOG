@@ -1,5 +1,10 @@
 Changelog
 
+* version 1.0.9 - xx/10/2018
+
+FastLogger: check rotate_log_mode is None in __init__
+
+
 * version 1.0.8 - 19/07/2018
 
 Remove CHANGELOG reference in setup.py
