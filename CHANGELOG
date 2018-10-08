@@ -1,6 +1,6 @@
 Changelog
 
-* version 1.0.9 - xx/10/2018
+* version 1.0.9 - 03/10/2018
 
 FastLogger: check rotate_log_mode is None in __init__
 
