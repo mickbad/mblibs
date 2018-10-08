@@ -66,19 +66,30 @@ class FastSettings(object):
 				raise Exception(
 					"{}: json/yaml settings error reading: {}".format(self.config_filename, e))
 
+		# init
+		self.is_json = False
+		self.is_yaml = False
+
 		# interprétation des données
 		error_str = ""
 		error_reading_json, error_reading_yaml = False, False
 		try:
 			self.settings = json.loads(self.config_content)
+			self.is_json = True
 		except Exception as e:
 			error_str = e
 			error_reading_json = True
 
 		if error_reading_json:
 			try:
+				# préservation des duplications de clef
+				# https://stackoverflow.com/questions/44904290/getting-duplicate-keys-in-yaml-using-python
+
 				import yaml
-				self.settings = yaml.load(self.config_content.replace("\t", "  "))
+				content = self.config_content.replace("\t", "  ")
+				self.settings = yaml.load(content)
+				self.is_yaml = True
+
 			except Exception as e:
 				error_str = e
 				error_reading_yaml = True
@@ -89,14 +100,22 @@ class FastSettings(object):
 
 	# ----------------------------------------------------------------------
 	# Récupération d'une configuration
-	def get(self, name, default="", __settings_temp=None):
+	def get(self, name, default="", parent_search=False, __settings_temp=None, __rank_recursion=0):
 		""" 
 			Récupération d'une configuration 
 			le paramètre ```name``` peut être soit un nom ou 
 			un chemin vers la valeur (séparateur /)
 
+			```parent_search``` est le boolean qui indique si on doit
+			chercher la valeur dans la hiérarchie plus haute. Si la chaîne
+			"/document/host/val" retourne None, on recherche dans "/document/val"
+			puis dans "/val"
+
 			```__settings_temp``` est le dictionnaire temporaire de 
 			transmission récursif (intégrant les sous configurations)
+
+			```__rank_recursion``` défini le rang de récusion pour chercher aussi
+			depuis la racine du chemin en cas de récursion inverse
 
 			exemple :
 				valeur = self.settings("document/host/val", "mon_defaut")
@@ -121,10 +140,10 @@ class FastSettings(object):
 
 			# récupération de l'indice si le nom obtenu contient []
 			indice_master = -1
-			indices_master = re.findall(r"\d+", name_master)
+			indices_master = re.findall(r"[\d+]", name_master)
 			if len(indices_master) > 0:
 				try:
-					indice_master = int(indices_master[0])
+					indice_master = int(indices_master[0].replace("[", "").replace("]", ""))
 				except:
 					pass
 
@@ -144,15 +163,39 @@ class FastSettings(object):
 				# la sous configuration est une liste
 				__settings_temp = __settings_temp[name_master][indice_master]
 
-			# recursion
-			return self.get("/".join(name.split("/")[1:]), default, __settings_temp)
+			# recursion sur le chemin en dessous
+			name_split = name.split("/")[1:]
+			search_path = "/".join(name_split)
+			return_value = self.get(
+				search_path, default, parent_search, __settings_temp, __rank_recursion + 1)
+
+			# pas de valeur trouvé, on cherche sur la récursion inverse
+			if len(name_split) > 1 and return_value is None:
+				# établissement du nouveau chemin et recherche
+				new_search_path = "/".join(name_split[-1:])
+				return_value = self.get(
+					new_search_path, default, parent_search, __settings_temp, __rank_recursion + 1)
+
+			# pas de valeur trouvé et on est à la racine du chemin
+			if return_value is None and __rank_recursion == 0:
+				# on change le nom du master et on cherche
+				name = name_split[-1]
+				return_value = self.get(
+					name, default, parent_search, self.settings, 0)
+
+				# toujours pas de valeur, on garde le défaut
+				if return_value is None:
+					return_value = default
+
+			# retour de la valeur récupérée
+			return return_value
 
 		# récupération de l'indice si le nom obtenu contient []
 		indice_master = -1
-		indices_master = re.findall(r"\d+", name)
+		indices_master = re.findall(r"\[\d+\]", name)
 		if len(indices_master) > 0:
 			try:
-				indice_master = int(indices_master[0])
+				indice_master = int(indices_master[0].replace("[", "").replace("]", ""))
 			except:
 				pass
 
@@ -161,7 +204,12 @@ class FastSettings(object):
 
 		# check de la précense de la clef
 		if name not in __settings_temp.keys():
-			# le hash du magazine n'est pas présent !
+			# le hash n'est pas présent !
+			# si la recherche récursive inverse est activée et pas de valeur trouvée,
+			# on recherche plus haut
+			if parent_search:
+				return None
+
 			return default
 
 		# récupération de la valeur
@@ -170,11 +218,17 @@ class FastSettings(object):
 			value = __settings_temp[name]
 
 		else:
-			# la sous configuration est une liste
-			value = __settings_temp[name][indice_master]
+			# la sous configuration est une liste (SI JSON !!)
+			value = __settings_temp[name][indice_master] if self.is_json else __settings_temp[name]
 
 		# interdiction de la valeur "None"
 		if value is None:
+			# si la recherche récursive inverse est activée et pas de valeur trouvée,
+			# on recherche plus haut
+			if parent_search:
+				return None
+
+			# valeur par défaut
 			value = default
 
 		# trim si value est un str
@@ -185,10 +239,10 @@ class FastSettings(object):
 		return value
 
 	# ---------------------------------------------------------
-	def getInt(self, name, default=0):
+	def getInt(self, name, default=0, parent_search=False):
 		""" récupération d'un élément entier """
 		try:
-			value = self.get(name, default)
+			value = self.get(name, default, parent_search)
 			return int(value)
 
 		except:
@@ -196,10 +250,10 @@ class FastSettings(object):
 			return default
 
 	# ---------------------------------------------------------
-	def getFloat(self, name, default=0.0):
+	def getFloat(self, name, default=0.0, parent_search=False):
 		""" récupération d'un élément float """
 		try:
-			value = self.get(name, default)
+			value = self.get(name, default, parent_search)
 			return float(value)
 
 		except:
@@ -207,10 +261,10 @@ class FastSettings(object):
 			return default
 
 	# ---------------------------------------------------------
-	def getEnable(self, name, default=False):
+	def getEnable(self, name, default=False, parent_search=False):
 		""" récupération d'un élément vrai ou faux (transformation en bool) """
 		# valeur
-		value = self.get(name, default)
+		value = self.get(name, default, parent_search)
 		if type(value) != str:
 			return (value == 1 or value)
 
@@ -218,14 +272,14 @@ class FastSettings(object):
 		return value.lower() in ["true", "t", "1", "oui", "vrai", "v", "on", "o", "yes", "y", "si", "s", "da", "d", "ja", "j"]
 
 	# ---------------------------------------------------------
-	def getWithDateFormat(self, name, default=""):
+	def getWithDateFormat(self, name, default="", parent_search=False):
 		""" 
 			récupération d'un élément de configuration et interprétation des valeurs de dates
 			variables acceptés : {dd}, {mm}, {yyyy}, {H}, {M} et {S}
 			{mm_human} donne le nom du mois
 		"""
 		# récupération de la valeur
-		value = self.get(name, default)
+		value = self.get(name, default, parent_search)
 
 		# récupération d'un delta dans le nom
 		#  {dd-10} donne 10 jours avant le jour d'aujourd'hui

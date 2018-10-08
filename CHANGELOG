@@ -1,5 +1,30 @@
 Changelog
 
+* version 1.0.10 - 08/10/2018
+
+FastSettings: Add default hierarchical value in configuration files with param ```parent_search```
+
+samle yaml document
+ app:
+  title: A current main title
+  width_1: 100
+  width_2: 150
+
+  # list
+  list:
+    test: value 1
+
+
+$> settings.get("/app/list/title", default="nothing", parent_search=True)
+"nothing"
+
+$> settings.get("/app/list/title", default="nothing", parent_search=True)
+"A current main title"
+
+FastSettings: in JSON settings, correct path with number in keys
+ /app/width_1 don't give an error
+
+
 * version 1.0.9 - 03/10/2018
 
 FastLogger: check rotate_log_mode is None in __init__

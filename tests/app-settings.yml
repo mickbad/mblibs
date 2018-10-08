@@ -1,0 +1,30 @@
+app:
+  title: A current main title
+  width_1: 100
+  width_2: 150
+
+  # list
+  list:
+    test: value 1
+    test: value 2
+
+  # sortie des données
+  output:
+    graphic_A:
+      # titre du graphique externe
+      title: "Base Graphics"
+
+      # liste des courbes à prendre en compte 
+      # (vide pour prendre toutes les courbes)
+      fields:
+        - cal19_base
+        - cal20_base
+
+    graphic_B:
+      # liste des courbes à prendre en compte 
+      # (vide pour prendre toutes les courbes)
+      fields:
+        - cal19_peak
+        - cal20_peak
+        
+subtitle: testing main subtitle
