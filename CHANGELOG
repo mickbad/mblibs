@@ -1,5 +1,30 @@
 Changelog
 
+* version 1.0.11 - 08/10/2018
+
+FastSettings: fix hierarchical search value with param ```multikeys_search```
+
+samle yaml document
+ app:
+  title: A current main title
+  width_1: 100
+  width_2: 150
+
+  test:
+    value2: correct
+
+  # list
+  list:
+    test: 1
+
+
+$> settings.get("/app/list/test/value2", default="nothing", parent_search=True, multikeys_search=False)
+"nothing"
+
+$> settings.get("/app/list/test/value2", default="nothing", parent_search=True, multikeys_search=True)
+"correct"
+
+
 * version 1.0.10 - 08/10/2018
 
 FastSettings: Add default hierarchical value in configuration files with param ```parent_search```
@@ -15,7 +40,7 @@ samle yaml document
     test: value 1
 
 
-$> settings.get("/app/list/title", default="nothing", parent_search=True)
+$> settings.get("/app/list/title", default="nothing", parent_search=False)
 "nothing"
 
 $> settings.get("/app/list/title", default="nothing", parent_search=True)

@@ -100,7 +100,7 @@ class FastSettings(object):
 
 	# ----------------------------------------------------------------------
 	# Récupération d'une configuration
-	def get(self, name, default="", parent_search=False, __settings_temp=None, __rank_recursion=0):
+	def get(self, name, default="", parent_search=False, multikeys_search=False, __settings_temp=None, __rank_recursion=0):
 		""" 
 			Récupération d'une configuration 
 			le paramètre ```name``` peut être soit un nom ou 
@@ -110,6 +110,10 @@ class FastSettings(object):
 			chercher la valeur dans la hiérarchie plus haute. Si la chaîne
 			"/document/host/val" retourne None, on recherche dans "/document/val"
 			puis dans "/val"
+
+			```multikeys_search``` indique si la recherche d'une clef non trouvabe
+			se fait sur les parents en multi clef
+			ie: /graphic/output/logo/enable va aussi chercher dans /graphic/logo/enable
 
 			```__settings_temp``` est le dictionnaire temporaire de 
 			transmission récursif (intégrant les sous configurations)
@@ -152,7 +156,7 @@ class FastSettings(object):
 
 			# recherche si la clef est présente dans le chemin courant
 			if name_master not in __settings_temp.keys():
-				return default
+				return None
 
 			# récupération de la sous configuration
 			if indice_master < 0:
@@ -160,28 +164,41 @@ class FastSettings(object):
 				__settings_temp = __settings_temp[name_master]
 
 			else:
-				# la sous configuration est une liste
-				__settings_temp = __settings_temp[name_master][indice_master]
+				# la sous configuration est une liste (SI JSON !!)
+				__settings_temp = __settings_temp[name][indice_master] if self.is_json else __settings_temp[name]
 
 			# recursion sur le chemin en dessous
 			name_split = name.split("/")[1:]
 			search_path = "/".join(name_split)
 			return_value = self.get(
-				search_path, default, parent_search, __settings_temp, __rank_recursion + 1)
+				search_path, default, parent_search, multikeys_search, __settings_temp, __rank_recursion + 1)
 
 			# pas de valeur trouvé, on cherche sur la récursion inverse
 			if len(name_split) > 1 and return_value is None:
-				# établissement du nouveau chemin et recherche
-				new_search_path = "/".join(name_split[-1:])
-				return_value = self.get(
-					new_search_path, default, parent_search, __settings_temp, __rank_recursion + 1)
+				i = len(name_split)
+				while i >= 0:
+					# on décrémente le curseur de recherche
+					i -= 1
+
+					# établissement du nouveau chemin en supprimant le niveau supérieur
+					new_search_path = "/".join(name_split[i-len(name_split):])
+					return_value = self.get(
+						new_search_path, default, parent_search, multikeys_search, __settings_temp, __rank_recursion + 1)
+
+					# pas de recherche multi clef
+					if not multikeys_search:
+						break
+
+					# une valeur a été trouvée
+					if not return_value is None:
+						break
 
 			# pas de valeur trouvé et on est à la racine du chemin
 			if return_value is None and __rank_recursion == 0:
 				# on change le nom du master et on cherche
 				name = name_split[-1]
 				return_value = self.get(
-					name, default, parent_search, self.settings, 0)
+					name, default, parent_search, multikeys_search, self.settings, 0)
 
 				# toujours pas de valeur, on garde le défaut
 				if return_value is None:
@@ -203,7 +220,7 @@ class FastSettings(object):
 		name = name.replace("[{}]".format(indice_master), "")
 
 		# check de la précense de la clef
-		if name not in __settings_temp.keys():
+		if type(__settings_temp) is str or name not in __settings_temp.keys():
 			# le hash n'est pas présent !
 			# si la recherche récursive inverse est activée et pas de valeur trouvée,
 			# on recherche plus haut
@@ -239,10 +256,10 @@ class FastSettings(object):
 		return value
 
 	# ---------------------------------------------------------
-	def getInt(self, name, default=0, parent_search=False):
+	def getInt(self, name, default=0, parent_search=False, multikeys_search=False):
 		""" récupération d'un élément entier """
 		try:
-			value = self.get(name, default, parent_search)
+			value = self.get(name, default, parent_search, multikeys_search)
 			return int(value)
 
 		except:
@@ -250,10 +267,10 @@ class FastSettings(object):
 			return default
 
 	# ---------------------------------------------------------
-	def getFloat(self, name, default=0.0, parent_search=False):
+	def getFloat(self, name, default=0.0, parent_search=False, multikeys_search=False):
 		""" récupération d'un élément float """
 		try:
-			value = self.get(name, default, parent_search)
+			value = self.get(name, default, parent_search, multikeys_search)
 			return float(value)
 
 		except:
@@ -261,10 +278,10 @@ class FastSettings(object):
 			return default
 
 	# ---------------------------------------------------------
-	def getEnable(self, name, default=False, parent_search=False):
+	def getEnable(self, name, default=False, parent_search=False, multikeys_search=False):
 		""" récupération d'un élément vrai ou faux (transformation en bool) """
 		# valeur
-		value = self.get(name, default, parent_search)
+		value = self.get(name, default, parent_search, multikeys_search)
 		if type(value) != str:
 			return (value == 1 or value)
 
@@ -272,14 +289,14 @@ class FastSettings(object):
 		return value.lower() in ["true", "t", "1", "oui", "vrai", "v", "on", "o", "yes", "y", "si", "s", "da", "d", "ja", "j"]
 
 	# ---------------------------------------------------------
-	def getWithDateFormat(self, name, default="", parent_search=False):
+	def getWithDateFormat(self, name, default="", parent_search=False, multikeys_search=False):
 		""" 
 			récupération d'un élément de configuration et interprétation des valeurs de dates
 			variables acceptés : {dd}, {mm}, {yyyy}, {H}, {M} et {S}
 			{mm_human} donne le nom du mois
 		"""
 		# récupération de la valeur
-		value = self.get(name, default, parent_search)
+		value = self.get(name, default, parent_search, multikeys_search)
 
 		# récupération d'un delta dans le nom
 		#  {dd-10} donne 10 jours avant le jour d'aujourd'hui

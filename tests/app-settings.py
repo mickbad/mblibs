@@ -63,8 +63,17 @@ def main(config_pathname):
     def check_hierarchic2():
         # check
         if settings.get("/app/output/graphic_A/subtitle", default="nop", parent_search=True) != "testing main subtitle":
-            raise Exception("./graphic_B/title failed to find right value")
+            raise Exception("./graphic_A/subtitle failed to find right value")
     check_hierarchic2()
+
+    # --------------------------------------------------------------------
+    @testing_function("Get hierarchic list from graphic_A with multi keys scan")
+    def check_hierarchic3():
+        # check
+        if settings.get("/app/output/graphic_A/fields-fiction", default="nop", parent_search=True, multikeys_search=True) != ["curve 1", "curve 2"]:
+            raise Exception(
+                "./graphic_A/fields-fiction failed to find right value")
+    check_hierarchic3()
 
     # resume
     print("")

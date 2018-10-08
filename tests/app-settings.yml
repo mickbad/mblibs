@@ -8,6 +8,12 @@ app:
     test: value 1
     test: value 2
 
+  # list2
+  graphic_A:
+    fields-fiction:
+      - curve 1
+      - curve 2
+
   # sortie des données
   output:
     graphic_A:
