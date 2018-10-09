@@ -24,7 +24,7 @@ setup(
 
     long_description=long_description,
 
-	install_requires=["pyyaml"],
+	install_requires=["pyyaml", "python-dateutil"],
 
     # activate MANIFEST.in
     include_package_data=True,

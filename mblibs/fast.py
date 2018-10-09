@@ -165,7 +165,7 @@ class FastSettings(object):
 
 			else:
 				# la sous configuration est une liste (SI JSON !!)
-				__settings_temp = __settings_temp[name][indice_master] if self.is_json else __settings_temp[name]
+				__settings_temp = __settings_temp[name_master][indice_master] if self.is_json else __settings_temp[name]
 
 			# recursion sur le chemin en dessous
 			name_split = name.split("/")[1:]
@@ -677,6 +677,7 @@ class FastThread(threading.Thread):
 # ----------------------------------------------------------------------
 
 # libs
+import dateutil.parser
 
 # ----------------------------------------------------------------------
 class FastDate(object):
@@ -685,7 +686,7 @@ class FastDate(object):
 		super(FastDate, self).__init__()
 
 	# ----------------------------------------------------------------------
-	def convert(self, date_from=None, date_format=""):
+	def convert(self, date_from=None, date_format=None):
 		"""
 		Retourne la date courante ou depuis l'argument au format datetime
 
@@ -693,6 +694,11 @@ class FastDate(object):
 		:return datetime
 		"""
 		try:
+			if date_format is None:
+				# on détermine la date avec dateutil
+				return dateutil.parser.parse(date_from)
+
+			# il y a un format de date prédéfini
 			return datetime.strptime(date_from, date_format)
 
 		except:
@@ -700,7 +706,7 @@ class FastDate(object):
 			return datetime.now()
 
 	# ----------------------------------------------------------------------
-	def delta(self, date_from=None, date_format="", days=0, hours=0, minutes=0, seconds=0, days_range=[1, 2, 3, 4, 5, 6, 7]):
+	def delta(self, date_from=None, date_format=None, days=0, hours=0, minutes=0, seconds=0, days_range=[1, 2, 3, 4, 5, 6, 7]):
 		"""
 		Retourne la date courante ou depuis une date fournie moins un delta
 		et étant autorisé dans une plage de jour (lundi=1 ... dimanche=7)
@@ -754,7 +760,7 @@ class FastDate(object):
 	# ----------------------------------------------------------------------
 
 	# ----------------------------------------------------------------------
-	def yesterday(self, date_from=None, date_format=""):
+	def yesterday(self, date_from=None, date_format=None):
 		"""
 		Retourne la date d'hier depuis maintenant ou depuis une date fournie
 
@@ -765,7 +771,7 @@ class FastDate(object):
 		return self.delta(date_from=date_from, date_format=date_format, days=-1)
 
 	# ----------------------------------------------------------------------
-	def weekday_yesterday(self, date_from=None, date_format=""):
+	def weekday_yesterday(self, date_from=None, date_format=None):
 		"""
 		Retourne la date d'hier depuis maintenant ou depuis une date fournie
 		seulement sur les jours de semaine.
@@ -778,7 +784,7 @@ class FastDate(object):
 		return self.delta(days=-1, date_from=date_from, date_format=date_format, days_range=[1, 2, 3, 4, 5])
 
 	# ----------------------------------------------------------------------
-	def weekend_yesterday(self, date_from=None, date_format=""):
+	def weekend_yesterday(self, date_from=None, date_format=None):
 		"""
 		Retourne la date d'hier depuis maintenant ou depuis une date fournie
 		seulement sur les jours de weekend.
@@ -791,7 +797,7 @@ class FastDate(object):
 		return self.delta(days=-1, date_from=date_from, date_format=date_format, days_range=[6, 7])
 
 	# ----------------------------------------------------------------------
-	def working_yesterday(self, date_from=None, date_format=""):
+	def working_yesterday(self, date_from=None, date_format=None):
 		"""
 		Retourne la date d'hier depuis maintenant ou depuis une date fournie
 		seulement sur les jours ouvrableq.
@@ -808,7 +814,7 @@ class FastDate(object):
 	# ----------------------------------------------------------------------
 
 	# ----------------------------------------------------------------------
-	def tomorrow(self, date_from=None, date_format=""):
+	def tomorrow(self, date_from=None, date_format=None):
 		"""
 		Retourne la date de demain depuis maintenant ou depuis une date fournie
 
@@ -819,7 +825,7 @@ class FastDate(object):
 		return self.delta(date_from=date_from, date_format=date_format, days=1)
 
 	# ----------------------------------------------------------------------
-	def weekday_tomorrow(self, date_from=None, date_format=""):
+	def weekday_tomorrow(self, date_from=None, date_format=None):
 		"""
 		Retourne la date de demain depuis maintenant ou depuis une date fournie
 		seulement sur les jours de semaine.
@@ -832,7 +838,7 @@ class FastDate(object):
 		return self.delta(days=1, date_from=date_from, date_format=date_format, days_range=[1, 2, 3, 4, 5])
 
 	# ----------------------------------------------------------------------
-	def weekend_tomorrow(self, date_from=None, date_format=""):
+	def weekend_tomorrow(self, date_from=None, date_format=None):
 		"""
 		Retourne la date de demain depuis maintenant ou depuis une date fournie
 		seulement sur les jours de weekend.
@@ -845,7 +851,7 @@ class FastDate(object):
 		return self.delta(days=1, date_from=date_from, date_format=date_format, days_range=[6, 7])
 
 	# ----------------------------------------------------------------------
-	def working_tomorrow(self, date_from=None, date_format=""):
+	def working_tomorrow(self, date_from=None, date_format=None):
 		"""
 		Retourne la date de demain depuis maintenant ou depuis une date fournie
 		seulement sur les jours ouvrableq.

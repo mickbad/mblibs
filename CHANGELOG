@@ -1,5 +1,12 @@
 Changelog
 
+* version 1.0.12 - 09/10/2018
+
+FastSettings: fix in json settings path with indexes (bad copy-paste)
+
+FastDate: add autodetect date format with package python-dateutil
+
+
 * version 1.0.11 - 08/10/2018
 
 FastSettings: fix hierarchical search value with param ```multikeys_search```
