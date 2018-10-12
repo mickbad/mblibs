@@ -1,5 +1,10 @@
 Changelog
 
+* version 1.1.0 - 12/10/2018
+
+FastEmail: change send mail with embedded images and attachements files
+
+
 * version 1.0.12 - 09/10/2018
 
 FastSettings: fix in json settings path with indexes (bad copy-paste)

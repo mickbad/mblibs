@@ -34,3 +34,15 @@ app:
         - cal20_peak
         
 subtitle: testing main subtitle
+
+# SMTP Preferences
+smtp:
+  host: localhost
+  port: 25
+  tls: False
+  login:
+  password:
+
+  mail_from: mail1@mail-sample.mx
+  mail_to: mail1@mail-sample.mx
+  mail_template: ./mail-template.html

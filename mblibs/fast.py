@@ -554,6 +554,10 @@ import smtplib
 
 # Import the email modules we'll need
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate
 
 # ----------------------------------------------------------------------
 class FastEmail(object):
@@ -565,14 +569,21 @@ class FastEmail(object):
 		# initialisation
 		self.mail_from = "contact@fs-dev.com"
 		self.mail_subject = "Message inconnu"
-		self.mail_text = "Message inconnu"
+		self.mail_text = 'Merci de lire le message depuis un lecteur acceptant le HTML.'
 		self.mail_html = "<h2>Message inconnu</h2>"
+
+		# informations sur le smtp à utiliser
+		self.smtp_host = "localhost"
+		self.smtp_port = 25
+		self.smtp_tls = False
+		self.smtp_login = ""
+		self.smtp_password = ""
 
 	# ----------------------------------------------------------------------
 	# Définition d'un texte pour le cord du message
 	def setHTML_from_file(self, filename, args):
 		""" Définition d'un texte pour le cord du message """
-		# vérification d'usage
+		#  vérification d'usage
 		if not os.path.isfile(filename):
 			return False
 
@@ -584,21 +595,130 @@ class FastEmail(object):
 		return True
 
 	# ----------------------------------------------------------------------
-	# Envoi de l'email préformaté
-	def send_email(self, to):
-		""" Envoi de l'email préformaté """
-		# Create a text/plain message
-		msg = MIMEText(self.mail_html, "html", "utf-8")
+	def send_mail(self, to, cc=[], bcc=[], attachfiles=[], embeddedimages_tag="graphic_embedded", embeddedimages=[]):
+		"""
+		Envoi d'un email à un ou plusieurs correspondants
 
-		# Configuration des informations de l'email
-		msg['Subject'] = self.mail_subject
-		msg['From'] = self.mail_from
-		msg['To'] = to
+		:param to: liste des correspondants en adresse directe
+		:param cc: liste des correspondants en copie du mail
+		:param bcc: liste des correspondants en copie caché du mail
+		:param attachfiles: liste des fichiers à mettre en pièce jointe (chemin exacte)
+		:param embeddedimages_tag: tag type <xxx> à prendre en compte dans le body HTML du mail pour intégrer des images
+		:param embeddedimages: liste des images à intégrer dans le body HTML
+		:return: boolean
+		"""
+		# vérifications d'usage
+		if type(to) != list:
+			raise Exception("Sendmail: error formatting adresses To (list)")
 
-		# Send the message via our own SMTP server.
-		s = smtplib.SMTP('localhost')
-		s.send_message(msg)
-		s.quit()
+		if type(cc) != list:
+			raise Exception("Sendmail: error formatting adresses Cc (list)")
+
+		if type(bcc) != list:
+			raise Exception("Sendmail: error formatting adresses Bcc (list)")
+
+		if type(attachfiles) != list:
+			raise Exception("Sendmail: error formatting attached files (list)")
+
+		# or embeddedimages_tag.find("<") < 0 or embeddedimages_tag.find(">") < 0:
+		if type(embeddedimages_tag) != str:
+			raise Exception("Sendmail: error formatting tag embedded images")
+
+		if type(embeddedimages) != list:
+			raise Exception(
+				"Sendmail: error formatting embedded images (list)")
+
+		if len(to) == len(cc) == len(bcc) == 0:
+			raise Exception(
+				"Sendmail: error, no destinations found (to, cc, bcc)")
+
+		# Create the root message and fill in the from, to, and subject headers
+		msgRoot = MIMEMultipart('related')
+		msgRoot['Subject'] = self.mail_subject
+		msgRoot['From'] = "<{}>".format(
+			self.mail_from) if not "<" in self.mail_from else self.mail_from
+		if len(to) > 0:
+			msgRoot['To'] = ", ".join(to)
+		if len(cc) > 0:
+			msgRoot['Cc'] = ", ".join(cc)
+		if len(bcc) > 0:
+			msgRoot['Bcc'] = ", ".join(bcc)
+		msgRoot["Date"] = formatdate(localtime=True)
+		msgRoot.preamble = 'This is a multi-part message in MIME format.'
+
+		# Encapsulate the plain and HTML versions of the message body in an
+		# 'alternative' part, so message agents can decide which they want to display.
+		msgAlternative = MIMEMultipart('alternative')
+		msgRoot.attach(msgAlternative)
+
+		msgText = MIMEText(self.mail_text)
+		msgAlternative.attach(msgText)
+
+		# We reference the image in the IMG SRC attribute by the ID we give it below
+		msgText = MIMEText(self.mail_html, "html", "utf-8")
+		msgAlternative.attach(msgText)
+
+		# Insertion des fichiers attachés dans le mail
+		for file_pathname in attachfiles:
+			try:
+				# ouverture du fichier
+				with open(file_pathname, 'rb') as fp:
+					msgAttachment = MIMEApplication(
+						fp.read(), Name=os.path.basename(file_pathname))
+
+				msgAttachment.add_header("Content-Disposition",
+										"attachment; filename=\"{}\"".format(os.path.basename(file_pathname)))
+				# msgAttachment.add_header("Content-Length", os.path.getsize(file_pathname))
+				msgRoot.attach(msgAttachment)
+
+			except Exception:
+				# pas de fichier valide
+				pass
+
+		# - Insertion des images dans l'email
+		indice = 1
+		for file_pathname in embeddedimages:
+			try:
+				# construction des variables
+				name_embedded = "<{}{}>".format(embeddedimages_tag, indice)
+
+				# Ouverture du fichier
+				with open(file_pathname, 'rb') as fp:
+					msgImage = MIMEImage(fp.read())
+
+				# Define the image's ID as referenced above
+				msgImage.add_header('Content-ID', name_embedded)
+				msgRoot.attach(msgImage)
+
+				# incrémentation
+				indice += 1
+
+			except Exception:
+				# pas de fichier valide
+				pass
+
+		# Send the email (this example assumes SMTP authentication is required)
+		smtp = smtplib.SMTP(
+			self.smtp_host,
+			self.smtp_port,
+		)
+		smtp.ehlo()
+		# smtp.connect(smtp_host)
+
+		# gestion du TLS
+		if self.smtp_tls:
+			smtp.starttls()
+
+		# authentification
+		if self.smtp_login != "":
+			smtp.login(self.smtp_login, self.smtp_password)
+
+		# Envoi du mail
+		smtp.sendmail(msgRoot['From'], to + cc + bcc, msgRoot.as_string())
+		smtp.quit()
+
+		# return OK
+		return True
 
 
 # ----------------------------------------------------------------------

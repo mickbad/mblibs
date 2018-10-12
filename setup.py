@@ -23,6 +23,7 @@ setup(
     description="Fast tools for programming",
 
     long_description=long_description,
+    long_description_content_type='text/markdown',
 
 	install_requires=["pyyaml", "python-dateutil"],
 
