@@ -1,5 +1,11 @@
 Changelog
 
+* version 1.1.1 - 12/11/2018
+
+FastSettings: fix get value settings path with alphanum
+  sample: /app/language1/fr => "pomme" and not a crash
+
+
 * version 1.1.0 - 12/10/2018
 
 FastEmail: change send mail with embedded images and attachements files

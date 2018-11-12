@@ -33,10 +33,11 @@ import re
 import json
 import codecs
 
+
 # ----------------------------------------------------------------------
 class FastSettings(object):
 	# ----------------------------------------------------------------------
-	""" object de gestion des configuraitons """
+	""" object de gestion des configurations """
 	def __init__(self, config_filename="", config_content=""):
 		super(FastSettings, self).__init__()
 		self.config_filename = config_filename
@@ -144,7 +145,7 @@ class FastSettings(object):
 
 			# récupération de l'indice si le nom obtenu contient []
 			indice_master = -1
-			indices_master = re.findall(r"[\d+]", name_master)
+			indices_master = re.findall(r"\[\d+\]", name_master)
 			if len(indices_master) > 0:
 				try:
 					indice_master = int(indices_master[0].replace("[", "").replace("]", ""))

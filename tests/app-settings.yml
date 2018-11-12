@@ -8,6 +8,11 @@ app:
     test: value 1
     test: value 2
 
+  # traduction
+  language1:
+    fr: pomme
+    en: apple
+
   # list2
   graphic_A:
     fields-fiction:

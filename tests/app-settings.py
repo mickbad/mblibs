@@ -34,6 +34,14 @@ def main(config_pathname):
     check_arraykeys()
 
     # --------------------------------------------------------------------
+    @testing_function("check value with specific key (alphanum)")
+    def check_alphanumkey():
+        val = settings.get("/app/language1/fr")
+        if val != "pomme":
+            raise Exception("not a correct value")
+    check_alphanumkey()
+
+    # --------------------------------------------------------------------
     @testing_function("list values from settings")
     def check_listoutput():
         # get list
