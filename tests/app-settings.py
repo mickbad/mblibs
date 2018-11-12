@@ -98,8 +98,8 @@ if __name__ == '__main__':
 
     # démarrage du programme
     try:
-        main(config_pathname)
         print("mblibs testing settings (v{})".format(mblibs.__version__))
+        main(config_pathname)
 
     except Exception as e:
         print("\n\n\n** Something went wrong:\n{}".format(str(e)))
