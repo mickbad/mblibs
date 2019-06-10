@@ -1,5 +1,11 @@
 Changelog
 
+* version 1.1.2 - 10/06/2019
+
+FastSettings: fix deprecated function yml/load 
+https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
+
+
 * version 1.1.1 - 12/11/2018
 
 FastSettings: fix get value settings path with alphanum

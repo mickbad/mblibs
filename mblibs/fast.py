@@ -88,7 +88,7 @@ class FastSettings(object):
 
 				import yaml
 				content = self.config_content.replace("\t", "  ")
-				self.settings = yaml.load(content)
+				self.settings = yaml.load(content, Loader=yaml.FullLoader)
 				self.is_yaml = True
 
 			except Exception as e:
