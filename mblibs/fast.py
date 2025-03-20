@@ -523,26 +523,31 @@ class FastLogger(object):
 	# ----------------------------------------------------------------------
 	def info(self, text):
 		""" Ajout d'un message de log de type INFO """
+		text = text.encode("utf-8", "ignore").decode("utf-8")
 		self.logger.info("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def debug(self, text):
 		""" Ajout d'un message de log de type DEBUG """
+		text = text.encode("utf-8", "ignore").decode("utf-8")
 		self.logger.debug("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def warn(self, text):
 		""" Ajout d'un message de log de type WARN """
+		text = text.encode("utf-8", "ignore").decode("utf-8")
 		self.logger.warn("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def warning(self, text):
 		""" Ajout d'un message de log de type WARN """
+		text = text.encode("utf-8", "ignore").decode("utf-8")
 		self.logger.warning("{}{}".format(self.message_prefix, text))
 
 	# ----------------------------------------------------------------------
 	def error(self, text):
 		""" Ajout d'un message de log de type ERROR """
+		text = text.encode("utf-8", "ignore").decode("utf-8")
 		self.logger.error("{}{}".format(self.message_prefix, text))
 
 
